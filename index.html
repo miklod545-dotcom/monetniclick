@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Монетный кликер</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #000;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        /* Модальное окно регистрации */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            padding: 25px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            border: 2px solid #ffcc00;
+        }
+        
+        .modal h2 {
+            color: #ffcc00;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        
+        .modal p {
+            margin-bottom: 20px;
+            color: #ccc;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #444;
+            background-color: #222;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #ffcc00;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #ffcc00, #ff9900);
+            color: #222;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(255, 204, 0, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 204, 0, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        /* Кнопка магазина в левом верхнем углу */
+        .shop-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(145deg, #00a800, #007700);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 100;
+            box-shadow: 
+                0 5px 0 #005500,
+                0 10px 20px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transform: perspective(500px) rotateX(10deg);
+        }
+        
+        .shop-btn:hover {
+            transform: perspective(500px) rotateX(10deg) translateY(-3px);
+            box-shadow: 
+                0 8px 0 #005500,
+                0 15px 25px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .shop-btn:active {
+            transform: perspective(500px) rotateX(10deg) translateY(2px);
+            box-shadow: 
+                0 3px 0 #005500,
+                0 5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .shop-btn i {
+            font-size: 1.3rem;
+        }
+        
+        /* Окно магазина */
+        .shop-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .shop-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .shop-content {
+            background: linear-gradient(145deg, #0a1a2a, #0a2a4a);
+            padding: 20px;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 0 50px rgba(0, 100, 255, 0.7),
+                inset 0 0 20px rgba(0, 150, 255, 0.3);
+            border: 3px solid #0088ff;
+            position: relative;
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            0% {
+                box-shadow: 
+                    0 0 40px rgba(0, 100, 255, 0.7),
+                    inset 0 0 20px rgba(0, 150, 255, 0.3);
+            }
+            100% {
+                box-shadow: 
+                    0 0 60px rgba(0, 150, 255, 0.9),
+                    inset 0 0 25px rgba(0, 200, 255, 0.5);
+            }
+        }
+        
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #00ff88;
+        }
+        
+        .shop-title {
+            color: #00ff88;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(0, 255, 136, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .close-btn {
+            background: linear-gradient(145deg, #ff3333, #cc0000);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 5px 0 #990000,
+                0 0 15px rgba(255, 0, 0, 0.7);
+            transition: all 0.3s;
+            transform: perspective(200px) rotateX(10deg);
+        }
+        
+        .close-btn:hover {
+            transform: perspective(200px) rotateX(10deg) scale(1.1);
+            box-shadow: 
+                0 5px 0 #990000,
+                0 0 20px rgba(255, 0, 0, 0.9);
+        }
+        
+        .close-btn:active {
+            transform: perspective(200px) rotateX(10deg) scale(0.95);
+            box-shadow: 
+                0 2px 0 #990000,
+                0 0 10px rgba(255, 0, 0, 0.7);
+        }
+        
+        .upgrades-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .upgrade-item {
+            background: linear-gradient(to right, rgba(0, 50, 100, 0.7), rgba(0, 80, 150, 0.5));
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #0088ff;
+            transition: all 0.3s;
+        }
+        
+        .upgrade-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 100, 255, 0.4);
+            background: linear-gradient(to right, rgba(0, 70, 130, 0.8), rgba(0, 100, 180, 0.6));
+        }
+        
+        .upgrade-info {
+            flex: 1;
+        }
+        
+        .upgrade-name {
+            color: #00ccff;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+        }
+        
+        .upgrade-desc {
+            color: #aaddff;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .upgrade-price {
+            color: #ffcc00;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-left: 15px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-width: 120px;
+            justify-content: flex-end;
+        }
+        
+        .upgrade-price i {
+            font-size: 1.3rem;
+        }
+        
+        .buy-btn {
+            background: linear-gradient(to right, #00cc66, #00aa44);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #006633;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .buy-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 #006633;
+        }
+        
+        .buy-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 3px 0 #006633;
+        }
+        
+        .buy-btn.disabled {
+            background: linear-gradient(to right, #666, #444);
+            color: #aaa;
+            cursor: not-allowed;
+            box-shadow: 0 5px 0 #333;
+        }
+        
+        .buy-btn.disabled:hover {
+            transform: none;
+            box-shadow: 0 5px 0 #333;
+        }
+        
+        .buy-btn.owned {
+            background: linear-gradient(to right, #0088ff, #0066cc);
+            cursor: pointer;
+            box-shadow: 0 5px 0 #004488;
+        }
+        
+        .buy-btn.owned:hover:not(.disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 #004488;
+        }
+        
+        .buy-btn.owned:active:not(.disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 3px 0 #004488;
+        }
+        
+        .buy-btn.owned.disabled {
+            background: linear-gradient(to right, #666, #444);
+            color: #aaa;
+            cursor: not-allowed;
+            box-shadow: 0 5px 0 #333;
+        }
+        
+        .upgrade-owned {
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+        
+        .upgrade-level {
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 3px;
+        }
+        
+        /* Контакт разработчика в левом нижнем углу */
+        .developer-contact {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 15px;
+            border-radius: 50px;
+            background: rgba(30, 30, 30, 0.8);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            z-index: 100;
+        }
+        
+        .telegram-icon {
+            color: #0088cc;
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 5px rgba(0, 136, 204, 0.7));
+            animation: pulse 2s infinite;
+        }
+        
+        .developer-text {
+            color: #0088cc;
+            font-size: 1rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 136, 204, 0.7);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 5px rgba(0, 136, 204, 0.7));
+            }
+            50% {
+                transform: scale(1.1);
+                filter: drop-shadow(0 0 10px rgba(0, 136, 204, 0.9));
+            }
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 5px rgba(0, 136, 204, 0.7));
+            }
+        }
+        
+        /* 3D эффект для текста */
+        .developer-text {
+            position: relative;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+        
+        .developer-text::before {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            color: rgba(0, 136, 204, 0.3);
+            z-index: -1;
+            transform: translate(2px, 2px);
+        }
+        
+        /* Основной контент */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .balance-container {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .balance-label {
+            font-size: 1.5rem;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        .balance-value {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s;
+        }
+        
+        .balance-add {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.5s;
+            white-space: nowrap;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+        
+        .coin-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .coin {
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle at 30% 30%, #ffcc00, #ff9900);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 
+                0 0 40px rgba(255, 204, 0, 0.7),
+                inset 0 -10px 20px rgba(0, 0, 0, 0.3),
+                inset 0 10px 20px rgba(255, 255, 255, 0.5);
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .coin:before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.3), transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .coin:after {
+            content: "$";
+            position: absolute;
+            font-size: 5rem;
+            font-weight: bold;
+            color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .coin:hover {
+            transform: scale(1.05);
+        }
+        
+        .coin:active {
+            transform: scale(0.95);
+        }
+        
+        .coin.clicked {
+            animation: coinClick 0.3s ease;
+        }
+        
+        @keyframes coinClick {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        
+        .click-effect {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0);
+        }
+        
+        .user-info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(50, 50, 50, 0.9);
+            padding: 10px 15px;
+            border-radius: 10px;
+            text-align: right;
+            border: 2px solid #ffcc00;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .user-name-display {
+            font-weight: bold;
+            color: #ffcc00;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .user-clicks-display {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .bonus-per-click {
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 5px;
+            text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            .coin {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .balance-value {
+                font-size: 3rem;
+            }
+            
+            .shop-btn {
+                padding: 10px 20px;
+                font-size: 1.1rem;
+            }
+            
+            .shop-title {
+                font-size: 1.7rem;
+            }
+            
+            .upgrade-name {
+                font-size: 1.3rem;
+            }
+            
+            .upgrade-price {
+                font-size: 1.3rem;
+                min-width: 100px;
+            }
+            
+            .developer-contact {
+                padding: 8px 12px;
+                gap: 8px;
+            }
+            
+            .telegram-icon {
+                font-size: 1.5rem;
+            }
+            
+            .developer-text {
+                font-size: 0.9rem;
+            }
+            
+            .buy-btn {
+                min-width: 80px;
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 350px) {
+            .coin {
+                width: 130px;
+                height: 130px;
+            }
+            
+            .balance-value {
+                font-size: 2.5rem;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+            
+            .shop-btn {
+                padding: 8px 15px;
+                font-size: 1rem;
+            }
+            
+            .shop-title {
+                font-size: 1.5rem;
+            }
+            
+            .upgrade-item {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .upgrade-price {
+                margin-left: 0;
+                justify-content: flex-start;
+            }
+            
+            .buy-btn {
+                margin-left: 0;
+                align-self: flex-start;
+            }
+            
+            .developer-text {
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 300px) {
+            .developer-contact {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+                padding: 8px;
+                border-radius: 15px;
+            }
+            
+            .developer-text {
+                white-space: normal;
+                font-size: 0.8rem;
+                line-height: 1.2;
+            }
+            
+            .shop-btn {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .shop-btn i {
+                font-size: 1rem;
+            }
+            
+            .upgrade-name {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Модальное окно регистрации -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <h2>Добро пожаловать в игру!</h2>
+            <p>Введите ваше имя для регистрации. Ваше имя и количество кликов будут сохранены.</p>
+            <div class="input-group">
+                <label for="username">Ваше имя:</label>
+                <input type="text" id="username" placeholder="Введите имя" maxlength="15" autocomplete="off" autofocus>
+            </div>
+            <button id="registerBtn" class="btn">Начать кликать!</button>
+        </div>
+    </div>
+    
+    <!-- Окно магазина -->
+    <div id="shopModal" class="shop-modal">
+        <div class="shop-content">
+            <div class="shop-header">
+                <div class="shop-title">Купить улучшения</div>
+                <button id="closeShopBtn" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="upgrades-list">
+                <div class="upgrade-item">
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">+5 за клик</div>
+                        <div class="upgrade-desc">Каждый клик дает на 5 монет больше</div>
+                        <div id="owned1" class="upgrade-owned"></div>
+                        <div id="level1" class="upgrade-level"></div>
+                    </div>
+                    <div id="price1" class="upgrade-price">
+                        <i class="fas fa-coins"></i> <span id="priceValue1">1500</span>
+                    </div>
+                    <button id="buyBtn1" class="buy-btn" data-upgrade="1" data-base-price="1500" data-bonus="5">Купить</button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">+15 за клик</div>
+                        <div class="upgrade-desc">Каждый клик дает на 15 монет больше</div>
+                        <div id="owned2" class="upgrade-owned"></div>
+                        <div id="level2" class="upgrade-level"></div>
+                    </div>
+                    <div id="price2" class="upgrade-price">
+                        <i class="fas fa-coins"></i> <span id="priceValue2">7500</span>
+                    </div>
+                    <button id="buyBtn2" class="buy-btn" data-upgrade="2" data-base-price="7500" data-bonus="15">Купить</button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">+25 за клик</div>
+                        <div class="upgrade-desc">Каждый клик дает на 25 монет больше</div>
+                        <div id="owned3" class="upgrade-owned"></div>
+                        <div id="level3" class="upgrade-level"></div>
+                    </div>
+                    <div id="price3" class="upgrade-price">
+                        <i class="fas fa-coins"></i> <span id="priceValue3">170000</span>
+                    </div>
+                    <button id="buyBtn3" class="buy-btn" data-upgrade="3" data-base-price="170000" data-bonus="25">Купить</button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">+35 за клик</div>
+                        <div class="upgrade-desc">Каждый клик дает на 35 монет больше</div>
+                        <div id="owned4" class="upgrade-owned"></div>
+                        <div id="level4" class="upgrade-level"></div>
+                    </div>
+                    <div id="price4" class="upgrade-price">
+                        <i class="fas fa-coins"></i> <span id="priceValue4">350000</span>
+                    </div>
+                    <button id="buyBtn4" class="buy-btn" data-upgrade="4" data-base-price="350000" data-bonus="35">Купить</button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">+50 за клик</div>
+                        <div class="upgrade-desc">Каждый клик дает на 50 монет больше</div>
+                        <div id="owned5" class="upgrade-owned"></div>
+                        <div id="level5" class="upgrade-level"></div>
+                    </div>
+                    <div id="price5" class="upgrade-price">
+                        <i class="fas fa-coins"></i> <span id="priceValue5">500000</span>
+                    </div>
+                    <button id="buyBtn5" class="buy-btn" data-upgrade="5" data-base-price="500000" data-bonus="50">Купить</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 10px; background: rgba(0, 50, 100, 0.3); border-radius: 10px; text-align: center;">
+                <div style="color: #ffcc00; font-size: 0.9rem; font-weight: bold;">
+                    <i class="fas fa-info-circle"></i> После покупки цена этого улучшения увеличивается на 25%
+                </div>
+                <div style="color: #aaddff; font-size: 0.8rem; margin-top: 5px;">
+                    Кнопка "Улучшить" становится серой, если не хватает монет
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Кнопка магазина в левом верхнем углу -->
+    <button id="shopBtn" class="shop-btn">
+        <i class="fas fa-shopping-cart"></i> Магазин
+    </button>
+    
+    <!-- Контакт разработчика в левом нижнем углу -->
+    <div class="developer-contact">
+        <i class="fab fa-telegram telegram-icon"></i>
+        <div class="developer-text" data-text="Разработчик: @W3030q0">Разработчик: @W3030q0</div>
+    </div>
+    
+    <!-- Основной контент -->
+    <div class="container">
+        <div class="user-info-panel">
+            <div id="userNameDisplay" class="user-name-display">Гость</div>
+            <div class="user-clicks-display">Ваши клики: <span id="userClicksDisplay">0</span></div>
+            <div id="bonusPerClick" class="bonus-per-click">+1 за клик</div>
+        </div>
+        
+        <div class="balance-container">
+            <div class="balance-label">Баланс:</div>
+            <div id="balanceValue" class="balance-value">0</div>
+            <div id="balanceAdd" class="balance-add">Баланс + 1</div>
+        </div>
+        
+        <div class="coin-container">
+            <div id="coin" class="coin"></div>
+        </div>
+    </div>
+
+    <script>
+        // Элементы DOM
+        const registerModal = document.getElementById('registerModal');
+        const usernameInput = document.getElementById('username');
+        const registerBtn = document.getElementById('registerBtn');
+        const shopBtn = document.getElementById('shopBtn');
+        const shopModal = document.getElementById('shopModal');
+        const closeShopBtn = document.getElementById('closeShopBtn');
+        const coin = document.getElementById('coin');
+        const balanceValue = document.getElementById('balanceValue');
+        const balanceAdd = document.getElementById('balanceAdd');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const userClicksDisplay = document.getElementById('userClicksDisplay');
+        const bonusPerClick = document.getElementById('bonusPerClick');
+        
+        // Данные игры
+        let balance = 0;
+        let userClicks = 0;
+        let username = '';
+        let baseBonus = 1; // Базовый бонус за клик
+        let totalBonus = 1; // Общий бонус за клик (базовый + улучшения)
+        
+        // Улучшения (теперь с уровнями)
+        let upgrades = {
+            1: { basePrice: 1500, currentPrice: 1500, bonus: 5, level: 0, owned: false },
+            2: { basePrice: 7500, currentPrice: 7500, bonus: 15, level: 0, owned: false },
+            3: { basePrice: 170000, currentPrice: 170000, bonus: 25, level: 0, owned: false },
+            4: { basePrice: 350000, currentPrice: 350000, bonus: 35, level: 0, owned: false },
+            5: { basePrice: 500000, currentPrice: 500000, bonus: 50, level: 0, owned: false }
+        };
+        
+        // Коэффициент увеличения цены после покупки
+        const priceIncreaseMultiplier = 1.25; // 25% увеличение
+        
+        // Проверяем, есть ли сохраненные данные пользователя
+        function checkUserRegistration() {
+            const savedUsername = localStorage.getItem('coinClickerUsername');
+            const savedBalance = localStorage.getItem('coinClickerBalance');
+            const savedClicks = localStorage.getItem('coinClickerClicks');
+            const savedUpgrades = localStorage.getItem('coinClickerUpgrades');
+            
+            if (savedUsername) {
+                // Пользователь уже зарегистрирован
+                username = savedUsername;
+                balance = parseInt(savedBalance) || 0;
+                userClicks = parseInt(savedClicks) || 0;
+                
+                if (savedUpgrades) {
+                    const parsedUpgrades = JSON.parse(savedUpgrades);
+                    for (let i = 1; i <= 5; i++) {
+                        if (parsedUpgrades[i]) {
+                            upgrades[i].level = parsedUpgrades[i].level || 0;
+                            upgrades[i].owned = parsedUpgrades[i].owned || false;
+                            upgrades[i].currentPrice = parsedUpgrades[i].currentPrice || upgrades[i].basePrice;
+                        }
+                    }
+                }
+                
+                // Обновляем отображение
+                userNameDisplay.textContent = username;
+                userClicksDisplay.textContent = userClicks;
+                balanceValue.textContent = balance;
+                
+                // Рассчитываем общий бонус
+                calculateTotalBonus();
+                updateBonusDisplay();
+                
+                // Скрываем модальное окно регистрации
+                registerModal.style.display = 'none';
+                
+                // Обновляем кнопки покупок
+                updateBuyButtons();
+                updatePricesDisplay();
+                updateLevelsDisplay();
+            } else {
+                // Новый пользователь - показываем модальное окно регистрации
+                registerModal.style.display = 'flex';
+            }
+        }
+        
+        // Регистрация пользователя
+        registerBtn.addEventListener('click', registerUser);
+        
+        // Регистрация при нажатии Enter
+        usernameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                registerUser();
+            }
+        });
+        
+        function registerUser() {
+            const name = usernameInput.value.trim();
+            
+            if (name === '') {
+                alert('Пожалуйста, введите ваше имя!');
+                return;
+            }
+            
+            if (name.length < 2) {
+                alert('Имя должно содержать минимум 2 символа!');
+                return;
+            }
+            
+            username = name;
+            
+            // Сохраняем данные пользователя
+            saveGameData();
+            
+            // Обновляем отображение
+            userNameDisplay.textContent = username;
+            userClicksDisplay.textContent = userClicks;
+            
+            // Скрываем модальное окно
+            registerModal.style.display = 'none';
+        }
+        
+        // Сохранение данных игры
+        function saveGameData() {
+            localStorage.setItem('coinClickerUsername', username);
+            localStorage.setItem('coinClickerBalance', balance);
+            localStorage.setItem('coinClickerClicks', userClicks);
+            
+            // Сохраняем состояние улучшений
+            localStorage.setItem('coinClickerUpgrades', JSON.stringify(upgrades));
+        }
+        
+        // Обработка клика по кнопке магазина
+        shopBtn.addEventListener('click', function() {
+            // Анимация нажатия
+            shopBtn.style.transform = 'perspective(500px) rotateX(10deg) translateY(2px)';
+            shopBtn.style.boxShadow = 
+                '0 3px 0 #005500, 0 5px 15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+            
+            setTimeout(() => {
+                shopBtn.style.transform = 'perspective(500px) rotateX(10deg)';
+                shopBtn.style.boxShadow = 
+                    '0 5px 0 #005500, 0 10px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+            }, 150);
+            
+            // Обновляем цены перед открытием магазина
+            updateBuyButtons();
+            
+            // Показываем окно магазина
+            shopModal.classList.add('active');
+        });
+        
+        // Закрытие окна магазина
+        closeShopBtn.addEventListener('click', function() {
+            shopModal.classList.remove('active');
+        });
+        
+        // Закрытие окна магазина при клике вне его
+        shopModal.addEventListener('click', function(e) {
+            if (e.target === shopModal) {
+                shopModal.classList.remove('active');
+            }
+        });
+        
+        // Обработка покупки улучшений
+        for (let i = 1; i <= 5; i++) {
+            const buyBtn = document.getElementById(`buyBtn${i}`);
+            buyBtn.addEventListener('click', function() {
+                const upgradeId = parseInt(this.getAttribute('data-upgrade'));
+                const upgrade = upgrades[upgradeId];
+                
+                // Проверяем, хватает ли денег
+                if (balance >= upgrade.currentPrice) {
+                    // Покупаем улучшение
+                    balance -= upgrade.currentPrice;
+                    upgrade.level++;
+                    upgrade.owned = true;
+                    
+                    // Увеличиваем цену ТОЛЬКО этого улучшения на 25%
+                    upgrade.currentPrice = Math.floor(upgrade.currentPrice * priceIncreaseMultiplier);
+                    
+                    // Обновляем отображение
+                    balanceValue.textContent = balance;
+                    
+                    // Рассчитываем новый бонус
+                    calculateTotalBonus();
+                    updateBonusDisplay();
+                    
+                    // Сохраняем данные
+                    saveGameData();
+                    
+                    // Обновляем кнопки, цены и уровни
+                    updateBuyButtons();
+                    updatePricesDisplay();
+                    updateLevelsDisplay();
+                    
+                    // Показываем сообщение об успешной покупке
+                    showPurchaseMessage(upgradeId, upgrade.level);
+                } else {
+                    alert('Недостаточно монет для покупки!');
+                }
+            });
+        }
+        
+        // Расчет общего бонуса за клик
+        function calculateTotalBonus() {
+            totalBonus = baseBonus;
+            for (let i = 1; i <= 5; i++) {
+                if (upgrades[i].level > 0) {
+                    totalBonus += upgrades[i].bonus * upgrades[i].level;
+                }
+            }
+        }
+        
+        // Обновление отображения бонуса за клик
+        function updateBonusDisplay() {
+            bonusPerClick.textContent = `+${totalBonus} за клик`;
+        }
+        
+        // Обновление состояния кнопок покупки
+        function updateBuyButtons() {
+            for (let i = 1; i <= 5; i++) {
+                const buyBtn = document.getElementById(`buyBtn${i}`);
+                const ownedText = document.getElementById(`owned${i}`);
+                const upgrade = upgrades[i];
+                
+                // Устанавливаем правильный текст кнопки
+                if (upgrade.level > 0) {
+                    buyBtn.textContent = 'Улучшить';
+                    buyBtn.classList.add('owned');
+                    ownedText.textContent = '✓ Приобретено';
+                } else {
+                    buyBtn.textContent = 'Купить';
+                    buyBtn.classList.remove('owned');
+                    ownedText.textContent = '';
+                }
+                
+                // Проверяем, хватает ли денег
+                if (balance >= upgrade.currentPrice) {
+                    // Хватает денег - кнопка активна
+                    buyBtn.classList.remove('disabled');
+                    buyBtn.disabled = false;
+                } else {
+                    // Не хватает денег - кнопка серая и неактивна
+                    buyBtn.classList.add('disabled');
+                    buyBtn.disabled = true;
+                }
+            }
+        }
+        
+        // Обновление отображения цен
+        function updatePricesDisplay() {
+            for (let i = 1; i <= 5; i++) {
+                const priceValue = document.getElementById(`priceValue${i}`);
+                priceValue.textContent = formatNumber(upgrades[i].currentPrice);
+            }
+        }
+        
+        // Обновление отображения уровней улучшений
+        function updateLevelsDisplay() {
+            for (let i = 1; i <= 5; i++) {
+                const levelText = document.getElementById(`level${i}`);
+                if (upgrades[i].level > 0) {
+                    levelText.textContent = `Уровень: ${upgrades[i].level}`;
+                } else {
+                    levelText.textContent = '';
+                }
+            }
+        }
+        
+        // Форматирование чисел с разделителями
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        }
+        
+        // Показ сообщения об успешной покупке
+        function showPurchaseMessage(upgradeId, level) {
+            const upgradeNames = {
+                1: '+5 за клик',
+                2: '+15 за клик',
+                3: '+25 за клик',
+                4: '+35 за клик',
+                5: '+50 за клик'
+            };
+            
+            const bonusAmount = upgrades[upgradeId].bonus * level;
+            const nextPrice = formatNumber(Math.floor(upgrades[upgradeId].currentPrice * priceIncreaseMultiplier));
+            alert(`Улучшение "${upgradeNames[upgradeId]}" куплено! Уровень: ${level}\nТеперь каждый клик дает +${bonusAmount} дополнительных монет от этого улучшения!\nЦена следующего уровня: ${nextPrice} монет`);
+        }
+        
+        // Обработка клика по монетке
+        coin.addEventListener('click', function(e) {
+            // Проверяем, зарегистрирован ли пользователь
+            if (!username) {
+                alert('Пожалуйста, зарегистрируйтесь, чтобы играть!');
+                registerModal.style.display = 'flex';
+                usernameInput.focus();
+                return;
+            }
+            
+            // Анимация клика
+            coin.classList.add('clicked');
+            setTimeout(() => {
+                coin.classList.remove('clicked');
+            }, 300);
+            
+            // Создаем эффект клика
+            createClickEffect(e.clientX, e.clientY);
+            
+            // Обновляем баланс
+            balance += totalBonus;
+            userClicks++;
+            
+            // Обновляем отображение
+            balanceValue.textContent = balance;
+            userClicksDisplay.textContent = userClicks;
+            
+            // Анимация добавления баланса
+            balanceAdd.textContent = `Баланс + ${totalBonus}`;
+            balanceAdd.style.opacity = '1';
+            balanceAdd.style.top = '-50px';
+            
+            // Если бонусный клик, меняем цвет текста
+            if (totalBonus > 1) {
+                balanceAdd.style.color = '#ffcc00';
+                balanceAdd.style.textShadow = '0 0 15px rgba(255, 204, 0, 0.9)';
+            } else {
+                balanceAdd.style.color = 'white';
+                balanceAdd.style.textShadow = '0 0 10px rgba(255, 255, 255, 0.7)';
+            }
+            
+            setTimeout(() => {
+                balanceAdd.style.opacity = '0';
+                balanceAdd.style.top = '-30px';
+            }, 500);
+            
+            // Сохраняем данные
+            localStorage.setItem('coinClickerBalance', balance);
+            localStorage.setItem('coinClickerClicks', userClicks);
+            
+            // Обновляем кнопки покупок
+            updateBuyButtons();
+        });
+        
+        // Создание эффекта клика
+        function createClickEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'click-effect';
+            effect.style.left = `${x}px`;
+            effect.style.top = `${y}px`;
+            
+            document.body.appendChild(effect);
+            
+            // Анимация
+            setTimeout(() => {
+                effect.style.opacity = '1';
+                effect.style.transform = 'scale(3)';
+            }, 10);
+            
+            setTimeout(() => {
+                effect.style.opacity = '0';
+                effect.style.transform = 'scale(0)';
+                
+                setTimeout(() => {
+                    if (effect.parentNode) {
+                        effect.parentNode.removeChild(effect);
+                    }
+                }, 300);
+            }, 300);
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            checkUserRegistration();
+            
+            // Форматируем начальные цены
+            updatePricesDisplay();
+            updateLevelsDisplay();
+            
+            // Добавляем обработчик для касаний на мобильных устройствах
+            coin.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const clickEvent = new MouseEvent('click', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                coin.dispatchEvent(clickEvent);
+            });
+            
+            // Обработчик касания для кнопки магазина
+            shopBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const clickEvent = new MouseEvent('click');
+                shopBtn.dispatchEvent(clickEvent);
+            });
+            
+            // Фокус на поле ввода при открытии модального окна
+            if (registerModal.style.display !== 'none') {
+                usernameInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
